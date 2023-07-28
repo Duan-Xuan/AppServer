@@ -1,166 +1,157 @@
-import { Text, StyleSheet, View, FlatList, TextInput, Image, TouchableOpacity, ImageBackground, Modal } from 'react-native'
-import React, { Component } from 'react'
-import backdround2 from '../assets/backdround2.png'
-import seach from '../assets/seach.png'
+import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, ImageBackground, FlatList, Modal } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import FontAwesome from 'react-native-vector-icons/FontAwesome'
+import backdround from '../assets/background4.jpg'
 
-var api_url = 'http://10.24.6.31:3000/api/ct'
+var api = 'http://192.168.0.106:3000/api/ct'
 
-export default class Category extends Component {
-    state = {
-        object: [],
-        object2: [],
-        name: '',
-        seach: '',
-        isModal: false
+const Category = ({ navigation }) => {
+    const [object, setObject] = useState([]);
+    const [object2, setObject2] = useState([]);
+    const [name, setName] = useState('');
+    const [seach, setSeach] = useState('');
+    const [isModal, setIsModal] = useState(false);
+
+    const modal = (x) => {
+        setName(x)
+        setIsModal(!isModal)
     }
-    set = (x) => {
-        this.setState({ name: x.name })
-    }
-    modal = (x) => {
-        this.set(x)
-        this.setState({ isModal: !this.state.isModal })
-    }
-    getSp = () => {
-        if (this.state.seach != '') {
-            const array = this.state.object.filter(element => element.name.includes(this.state.seach))
-            this.setState({ object2: array })
+
+    const getSp = () => {
+        if (seach != '') {
+            const array = object.filter(element => element.name.includes(seach))
+            setObject2(array)
         } else {
-            this.setState({ object2: this.state.object })
+            setObject2(object)
         }
     }
-    getList = () => {
-        fetch(api_url)
-            .then((res) => { return res.json(); })
-            .then((data_json) => {
-                this.setState({ object: data_json.data });
-                if (typeof (this.state.object2) == 'object') {
-                    this.setState({ object2: data_json.data });
+
+    const getServer = () => {
+        axios.get(api)
+            .then(function (response) {
+                if (response.data.status) {
+                    setObject(response.data.message)
+                    setObject2(response.data.message)
+                } else {
+                    console.log(response.data.massage)
                 }
             })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+            .finally(function () {
+                // always executed
+            });
     }
-    render() {
-        return (
-            <ImageBackground onLayout={this.getList} source={backdround2} style={styles.container}>
-                <View style={styles.box}>
-                    <Text style={styles.title}>Bảng Category</Text>
-                    <View style={styles.textInput}>
-                        <TextInput style={{ flex: 1 }} onChangeText={(content) => { this.setState({ seach: content }) }} placeholder='Seach...' />
-                        <TouchableOpacity onPress={this.getSp}>
-                            <Image style={{ width: 30, height: 30 }} source={seach} />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList data={this.state.object2} renderItem={(data) => (
-                        <TouchableOpacity style={styles.buttonModel} onPress={this.modal.bind(this, data.item)}>
-                            <View style={styles.bangTitle}><Text style={styles.text}>Tên loại:</Text></View>
-                            <View style={styles.bangTitle}><Text style={styles.text}>{data.item.name}</Text></View>
-                        </TouchableOpacity>
-                    )} />
-                </View>
-                <Modal animationType="slide"
-                    transparent={true}
-                    visible={this.state.isModal}
-                    onRequestClose={() => { this.modal }}>
-                    <View style={styles.khungngoai}>
-                        <View style={styles.khungtrong}>
-                            <Text style={styles.title2}>Thông Tin Category</Text>
-                            <Image style={styles.image} source={this.state.avatar} />
-                            <View style={{ flexDirection: 'row', marginTop: '5%', alignItems: 'center' }}>
-                                <Text style={styles.text2}>Tên loại: </Text>
-                                <Text style={styles.text2}>{this.state.name}</Text>
-                            </View>
-                            <TouchableOpacity onPress={this.modal} style={styles.button}>
-                                <Text style={styles.text2}>Đóng</Text>
-                            </TouchableOpacity>
+
+    useEffect(() => {
+        getServer()
+    }, [])
+
+    return (
+        <ImageBackground onLayout={this.getList} source={backdround} style={styles.container}>
+            <Text style={styles.title}>Bảng Category</Text>
+            <View style={styles.textInput}>
+                <TextInput style={{ flex: 1 }} onChangeText={(content) => { setSeach(content) }} placeholder='Seach...' />
+                <TouchableOpacity onPress={getSp}>
+                    <FontAwesome name='search' size={25} />
+                </TouchableOpacity>
+            </View>
+            <FlatList numColumns={2} data={object2} showsVerticalScrollIndicator={false} renderItem={(data) => (
+                <TouchableOpacity style={styles.buttonModel} onPress={modal.bind(this, data.item.name)}>
+                    <Text style={{ fontWeight: 'bold' }}>Name</Text>
+                    <Text style={{ fontWeight: 'bold' }}>{data.item.name}</Text>
+                </TouchableOpacity>
+            )} />
+
+            <Modal animationType="slide"
+                transparent={true}
+                visible={isModal}
+                onRequestClose={() => { modal }}>
+                <View style={styles.khungngoai}>
+                    <View style={styles.khungtrong}>
+                        <Text style={{
+                            fontSize: 25,
+                            fontWeight: 'bold',
+                            marginTop: '5%'
+                        }}>Thông Tin Category</Text>
+                        <View style={{ marginTop: '5%', alignItems: 'center' }}>
+                            <Text style={{ fontWeight: 'bold' }}>Name</Text>
+                            <Text style={{ fontWeight: 'bold' }}>{name}</Text>
                         </View>
+                        <TouchableOpacity onPress={() => setIsModal(!isModal)} style={styles.button}>
+                            <Text>Đóng</Text>
+                        </TouchableOpacity>
                     </View>
-                </Modal>
-            </ImageBackground>
-        )
-    }
+                </View>
+            </Modal>
+        </ImageBackground>
+    )
 }
+
+export default Category
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        alignItems: 'center'
-    },
-    image: {
-        width: 50,
-        height: 50
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
     },
     title: {
         fontSize: 40,
-        marginTop: '20%',
+        marginTop: '15%',
         fontWeight: 'bold',
         color: 'white'
     },
-    title2: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        marginTop: '5%'
-    },
-    box: {
-        alignItems: 'center',
-    },
-    bangTitle: {
-        height: 50,
-        width: '49%',
-        margin: 1,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    text: {
-        fontWeight: 'bold',
-        fontSize: 20
-    },
-    text2: {
-        fontWeight: 'bold'
-    },
-    buttonModel: {
-        height: 60,
-        marginLeft: 20,
-        marginRight: 20,
-        backgroundColor: '#CCFFFF',
-        flexDirection: 'row',
-        marginTop: '3%',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#00FFFF',
-        alignItems: 'center',
-    },
-    khungngoai: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    khungtrong: {
-        height: 300,
-        borderRadius: 20,
-        backgroundColor: 'white',
-        marginLeft: 40,
-        marginRight: 40,
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#0033FF',
-    },
-    button: {
-        width: 100,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: '25%',
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: '#CCFFCC',
-        backgroundColor: '#6699FF'
-    },
     textInput: {
-        width: 300,
+        width: 350,
+        height: 50,
         borderWidth: 1,
+        alignItems: 'center',
+        margin: '2%',
         padding: 10,
-        margin: '3%',
         flexDirection: 'row',
         backgroundColor: 'white',
         borderRadius: 10,
         borderColor: '#00FFFF'
-    }
+    },
+    buttonModel: {
+        margin: '2%',
+        height: 60,
+        width: 180,
+        borderWidth: 1,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderColor: '#00FFFF',
+        backgroundColor: '#CCFFFF',
+    },
+    khungngoai: {
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    khungtrong: {
+        width: '80%',
+        height: 200,
+        borderWidth: 2,
+        borderRadius: 20,
+        backgroundColor: 'white',
+        alignItems: 'center',
+        borderColor: '#0033FF',
+    },
+    button: {
+        marginTop: '5%',
+        width: 100,
+        height: 50,
+        borderWidth: 2,
+        borderRadius: 10,
+        alignItems: 'center',
+        borderColor: '#CCFFCC',
+        justifyContent: 'center',
+        backgroundColor: '#6699FF'
+    },
 })

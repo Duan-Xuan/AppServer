@@ -1,128 +1,122 @@
-import { StyleSheet, View, Image, TouchableOpacity, Alert, Text, TextInput, ImageBackground } from 'react-native'
-import React, { Component } from 'react'
+import { StyleSheet, View, Image, TouchableOpacity, Alert, Text, TextInput, ImageBackground } from 'react-native';
+import React, { useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import background from '../assets/background.png'
+import axios from 'axios'
+import background from '../assets/background.jpg'
 import User from '../assets/user.png'
 import Lock from '../assets/lock.png'
 
-var api_url = 'http://10.24.6.31:3000/api/user/login';
+var api = 'http://192.168.0.106:3000/api/user/login'
 
-export default class Login extends Component {
-    state = {
-        Username: '',
-        Password: ''
+const Login = ({ navigation }) => {
+    const [user, setUser] = useState("");
+    const [pass, setPass] = useState("");
+
+    const login = () => {
+        if (user === '' || pass === '') {
+            Alert.alert('Thông báo', 'Vui lòng nhập đủ thông tin')
+            return;
+        }
+        postServer()
     }
 
-    render() {
-        const { navigation } = this.props
+    const reg = () => {
+        navigation.navigate('Reg')
+    }
 
-        const login = () => {
-            if (this.state.Username == '' || this.state.Password == '') {
-                Alert.alert('Thông báo', 'Vui lòng nhập đủ thông tin')
-                return
-            }
-            let obj = { username: this.state.Username, password: this.state.Password };
-            fetch(api_url, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(obj)
+    const postServer = () => {
+        axios.post(api, {
+            username: user,
+            password: pass
+        })
+            .then(function (response) {
+                if (response.data.status) {
+                    Alert.alert("Thông báo", "Đăng nhập thành công")
+                    // AsyncStorage.setItem('token', response.data.message)
+                    navigation.replace('Home', { screen: 'Product' })
+                } else {
+                    Alert.alert("Thông báo", response.data.message)
+                }
             })
-                .then((res) => { return res.json(); })
-                .then((data_json) => {
-                    if (typeof (data_json.token) != 'undefined') {
-                        // Lưu thông tin
-                        if (data_json.user.role != 'admin') {
-                            Alert.alert('Thông báo', 'Đăng nhập thành công')
-                            AsyncStorage.setItem('token', data_json.token)
-                            navigation.navigate('Home', { screen: 'Product' })
-                        } else {
-                            Alert.alert('Thông báo', 'Chỉ đăng nhập với vai trò user')
-                        }
-                    } else {
-                        Alert.alert('Thông báo', 'Sai thông tin đăng nhập')
-                    }
-                })
-        }
-
-        const reg = () => {
-            navigation.navigate('Reg')
-        }
-
-        return (
-            <ImageBackground onLayout={this.getList} source={background} style={styles.container}>
-                <Text style={styles.title}>Login</Text>
-                <View style={styles.box}>
-                    <View style={styles.textInputNgoai}>
-                        <Image style={styles.image} source={User} />
-                        <TextInput style={styles.textInputTrong} onChangeText={(content) => { this.setState({ Username: content }) }} placeholder='Nhập Username'>{this.state.Username}</TextInput>
-                    </View>
-                    <View style={styles.textInputNgoai}>
-                        <Image style={styles.image} source={Lock} />
-                        <TextInput style={styles.textInputTrong} onChangeText={(content) => { this.setState({ Password: content }) }} secureTextEntry placeholder='Nhập Password'>{this.state.Password}</TextInput>
-                    </View>
-                    <TouchableOpacity onPress={login} style={styles.button1}>
-                        <Text style={styles.text1}>
-                            Đăng nhập
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity onPress={reg} style={styles.button2}>
-                    <Text style={styles.text2}>
-                        Register
-                    </Text>
-                </TouchableOpacity>
-            </ImageBackground>
-        )
+            .catch(function (error) {
+                console.log(error);
+            });
     }
+    return (
+        <ImageBackground source={background} style={styles.container}>
+            <Text style={styles.title}>Login</Text>
+            <View style={styles.box}>
+                <View style={styles.textInputNgoai}>
+                    <Image style={styles.image} source={User} />
+                    <TextInput style={styles.textInputTrong} onChangeText={(content) => { setUser(content) }} placeholder='Username' />
+                </View>
+                <View style={styles.textInputNgoai}>
+                    <Image style={styles.image} source={Lock} />
+                    <TextInput style={styles.textInputTrong} onChangeText={(content) => { setPass(content) }} secureTextEntry placeholder='Password' />
+                </View>
+                <TouchableOpacity onPress={login} style={styles.button}>
+                    <Text style={styles.text}>Login</Text>
+                </TouchableOpacity>
+            </View>
+            <Text style={{ top: '10%' }}>Have not account yet?</Text>
+            <TouchableOpacity onPress={reg} style={{ top: '10%' }}>
+                <Text style={{ fontWeight: 'bold', color: 'white' }}>Register</Text>
+            </TouchableOpacity>
+        </ImageBackground>
+    )
 }
+
+export default Login
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        alignItems: 'center'
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+    },
+    title: {
+        marginTop: '15%',
+        fontSize: 60,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    box: {
+        width: 320,
+        height: 340,
+        borderWidth: 1,
+        marginTop: '15%',
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderColor: '#00CCFF',
+        backgroundColor: 'white',
+    },
+    textInputNgoai: {
+        width: 250,
+        borderWidth: 1,
+        borderRadius: 10,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: '10%',
+        borderColor: '#9999FF',
+        alignItems: 'center',
     },
     image: {
         width: 40,
         height: 40,
     },
-    title: {
-        fontSize: 70,
-        marginTop: '20%',
-        fontWeight: 'bold',
-        color: 'white'
-    },
-    box: {
-        width: 300,
-        height: 300,
-        borderWidth: 2,
-        borderRadius: 20,
-        borderColor: '#00CCFF',
-        marginTop: '15%',
-        backgroundColor: '#F8F8FF',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    textInputNgoai: {
-        width: 250,
-        flexDirection: 'row',
-        marginBottom: '10%',
-        borderBottomWidth: 1,
-        borderBottomColor: '#9999FF',
-        alignItems: 'center',
-    },
     textInputTrong: {
-        padding: 20
+        width: '75%',
+        height: 60,
+        paddingLeft: 10,
     },
-    text1: {
+    text: {
         color: 'white',
         fontWeight: 'bold',
         textAlign: 'center'
     },
-    button1: {
-        width: 100,
+    button: {
+        width: '40%',
         height: 50,
         borderRadius: 10,
         borderWidth: 1,
@@ -130,20 +124,4 @@ const styles = StyleSheet.create({
         backgroundColor: '#6699FF',
         justifyContent: 'center'
     },
-    text2: {
-        fontSize: 30,
-        color: 'white',
-        fontWeight: 'bold',
-        textAlign: 'center'
-    },
-    button2: {
-        width: 150,
-        height: 70,
-        marginTop: '20%',
-        marginLeft: '50%',
-        backgroundColor: '#FFCCCC',
-        justifyContent: 'center',
-        borderBottomRightRadius: 40,
-        borderTopLeftRadius: 40
-    }
 })

@@ -1,14 +1,14 @@
 import { Text, StyleSheet, View, Image, TouchableOpacity, ImageBackground, Alert, Modal, TextInput } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import backdround2 from '../assets/backdround2.png'
+import backdround from '../assets/background5.jpg'
 import user2 from '../assets/user2.png'
 import addUser from '../assets/add-user.png'
 import Lock from '../assets/lock.png'
 
-var api_url = 'http://10.24.6.31:3000/api/user/profile'
-var api_url2 = 'http://10.24.6.31:3000/api/user'
-var api_url3 = 'http://10.24.6.31:3000/api/user/logout'
+var api_url = 'http://192.168.0.106:3000/api/user/profile'
+var api_url2 = 'http://192.168.0.106:3000/api/user'
+var api_url3 = 'http://192.168.0.106:3000/api/user/logout'
 
 const Account = (props) => {
     const { navigation } = props
@@ -91,7 +91,7 @@ const Account = (props) => {
             })
     }
     return (
-        <ImageBackground onLayout={profile} source={backdround2} style={styles.container}>
+        <ImageBackground onLayout={profile} source={backdround} style={styles.container}>
             <View style={styles.box}>
                 <Text style={styles.title}>Thông Tin</Text>
                 <View style={styles.box12}>

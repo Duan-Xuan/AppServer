@@ -1,167 +1,172 @@
 import { Text, StyleSheet, View, Image, TouchableOpacity, TextInput, ImageBackground, FlatList, Modal } from 'react-native'
-import React, { Component } from 'react'
-import backdround2 from '../assets/backdround2.png'
-import seach from '../assets/seach.png'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import FontAwesome from 'react-native-vector-icons/FontAwesome'
+import backdround from '../assets/background3.png'
 
-var api_url = 'http://10.24.6.31:3000/api/pr'
+var api = 'http://192.168.0.106:3000/api/pr'
 
-export default class Product extends Component {
-    state = {
-        object: [],
-        object2: [],
-        name: '',
-        avatar: '',
-        description: '',
-        price: '',
-        seach: '',
-        isModal: false
+const Product = ({ navigation }) => {
+    const [object, setObject] = useState([]);
+    const [object2, setObject2] = useState([]);
+    const [name, setName] = useState('');
+    const [avatar, setAvatar] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+    const [seach, setSeach] = useState('');
+    const [isModal, setIsModal] = useState(false);
+
+    const modal = (x) => {
+        setName(x.name)
+        setAvatar(x.avatar)
+        setDescription(x.description)
+        setPrice(x.price)
+        setIsModal(!isModal)
     }
-    set = (x) => {
-        this.setState({ name: x.name })
-        this.setState({ avatar: x.avatar })
-        this.setState({ description: x.description })
-        this.setState({ price: x.price })
-    }
-    modal = (x) => {
-        this.set(x)
-        this.setState({ isModal: !this.state.isModal })
-    }
-    getSp = () => {
-        if (this.state.seach != '') {
-            const array = this.state.object.filter(element => element.name.includes(this.state.seach))
-            this.setState({ object2: array })
+
+    const getSp = () => {
+        if (seach != '') {
+            const array = object.filter(element => element.name.includes(seach))
+            setObject2(array)
         } else {
-            this.setState({ object2: this.state.object })
+            setObject2(object)
         }
     }
-    getList = () => {
-        fetch(api_url)
-            .then((res) => { return res.json(); })
-            .then((data_json) => {
-                this.setState({ object: data_json.data });
-                this.setState({ object2: data_json.data });
+
+    const getServer = () => {
+        axios.get(api)
+            .then(function (response) {
+                if (response.data.status) {
+                    setObject(response.data.message)
+                    setObject2(response.data.message)
+                } else {
+                    console.log(response.data.massage)
+                }
             })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+            .finally(function () {
+                // always executed
+            });
     }
-    render() {
-        return (
-            <ImageBackground onLayout={this.getList} source={backdround2} style={styles.container}>
-                <View style={styles.box}>
-                    <Text style={styles.title}>Bảng Product</Text>
-                    <View style={styles.textInput}>
-                        <TextInput style={{ flex: 1 }} onChangeText={(content) => { this.setState({ seach: content }) }} placeholder='Seach...' />
-                        <TouchableOpacity onPress={this.getSp}>
-                            <Image style={{ width: 30, height: 30 }} source={seach} />
+
+    useEffect(() => {
+        getServer()
+    }, [])
+
+    return (
+        <ImageBackground source={backdround} style={styles.container}>
+            <Text style={styles.title}>Bảng Product</Text>
+            <View style={styles.textInput}>
+                <TextInput style={{ flex: 1 }} onChangeText={(content) => { setSeach(content) }} placeholder='Seach...' />
+                <TouchableOpacity onPress={getSp}>
+                    <FontAwesome name='search' size={25} />
+                </TouchableOpacity>
+            </View>
+            <FlatList numColumns={2} data={object2} showsVerticalScrollIndicator={false} renderItem={(data) => (
+                <TouchableOpacity key={data.index} style={styles.buttonModel} onPress={modal.bind(this, data.item)}>
+                    <Image style={styles.image} source={{ uri: data.item.avatar }} />
+                    <Text style={{ fontWeight: 'bold' }}>Name: {data.item.name}</Text>
+                    <Text style={{ fontWeight: 'bold' }}>Price: {data.item.price} VND</Text>
+                </TouchableOpacity>
+            )} />
+
+            <Modal animationType="slide"
+                transparent={true}
+                visible={isModal}
+                onRequestClose={() => { modal }}>
+                <View style={styles.khungngoai}>
+                    <View style={styles.khungtrong}>
+                        <Text style={{
+                            fontSize: 25,
+                            fontWeight: 'bold',
+                            marginTop: '5%'
+                        }}>Thông Tin Product</Text>
+                        <Image style={styles.image} source={{ uri: avatar }} />
+                        <Text style={{ fontWeight: 'bold' }}>Name: {name}</Text>
+                        <Text style={{ fontWeight: 'bold' }}>Price: {price} VND</Text>
+                        <Text style={{ fontWeight: 'bold' }}>{description}</Text>
+                        <TouchableOpacity onPress={() => setIsModal(!isModal)} style={styles.button}>
+                            <Text>Đóng</Text>
                         </TouchableOpacity>
                     </View>
-                    <FlatList data={this.state.object2} renderItem={(data) => (
-                        <TouchableOpacity style={styles.buttonModel} onPress={this.modal.bind(this, data.item)}>
-                            <View style={{ flex: 1, alignItems: 'center' }}>
-                                <Image style={styles.image} source={{ uri: data.item.avatar }} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.text}>Tên: {data.item.name}</Text>
-                                <Text style={styles.text}>Giá: {data.item.price} VND</Text>
-                            </View>
-                        </TouchableOpacity>
-                    )} />
                 </View>
-                <Modal animationType="slide"
-                    transparent={true}
-                    visible={this.state.isModal}
-                    onRequestClose={() => { this.modal }}>
-                    <View style={styles.khungngoai}>
-                        <View style={styles.khungtrong}>
-                            <Text style={styles.title2}>Thông Tin Product</Text>
-                            <Image style={styles.image} source={{ uri: this.state.avatar }} />
-                            <View>
-                                <Text style={styles.text}>Tên: {this.state.name}</Text>
-                                <Text style={styles.text}>Đánh giá: {this.state.description}</Text>
-                                <Text style={styles.text}>Giá: {this.state.price} VND</Text>
-                            </View>
-                            <TouchableOpacity onPress={this.modal} style={styles.button}>
-                                <Text style={styles.text2}>Đóng</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
-            </ImageBackground>
-        )
-    }
+            </Modal>
+        </ImageBackground>
+    )
 }
+
+export default Product
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        alignItems: 'center'
-    },
-    image: {
-        width: 150,
-        height: 80,
-        borderWidth: 1,
-        borderColor: '#00CC33',
-        borderRadius: 10
-    },
-    text: {
-        fontWeight: 'bold'
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
     },
     title: {
         fontSize: 40,
-        marginTop: '20%',
+        marginTop: '15%',
         fontWeight: 'bold',
         color: 'white'
     },
-    title2: {
-        fontSize: 25,
-        fontWeight: 'bold',
-        marginTop: '5%'
-    },
-    box: {
-        alignItems: 'center',
-    },
-    buttonModel: {
-        height: 100,
-        width: 350,
-        backgroundColor: '#CCFFFF',
-        flexDirection: 'row',
-        marginTop: '3%',
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#00FFFF',
-        alignItems: 'center'
-    },
-    khungngoai: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    khungtrong: {
-        height: 300,
-        borderRadius: 20,
-        backgroundColor: 'white',
-        marginLeft: 40,
-        marginRight: 40,
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#0033FF',
-    },
-    button: {
-        width: 100,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: '5%',
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: '#CCFFCC',
-        backgroundColor: '#6699FF'
-    },
     textInput: {
-        width: 300,
+        width: 350,
+        height: 50,
         borderWidth: 1,
+        alignItems: 'center',
+        margin: '2%',
         padding: 10,
-        margin: '3%',
         flexDirection: 'row',
         backgroundColor: 'white',
         borderRadius: 10,
         borderColor: '#00FFFF'
-    }
+    },
+    buttonModel: {
+        height: 210,
+        width: 180,
+        backgroundColor: '#CCFFFF',
+        margin: '2%',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#00FFFF',
+        alignItems: 'center',
+    },
+    image: {
+        width: 150,
+        height: 140,
+        margin: 10,
+        borderWidth: 1,
+        borderColor: '#00CC33',
+        borderRadius: 10,
+    },
+
+    khungngoai: {
+        width: '100%',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    khungtrong: {
+        width: '80%',
+        height: 350,
+        borderWidth: 2,
+        borderRadius: 20,
+        backgroundColor: 'white',
+        alignItems: 'center',
+        borderColor: '#0033FF',
+    },
+    button: {
+        marginTop: '3%',
+        width: 100,
+        height: 50,
+        borderWidth: 2,
+        borderRadius: 10,
+        alignItems: 'center',
+        borderColor: '#CCFFCC',
+        justifyContent: 'center',
+        backgroundColor: '#6699FF'
+    },
 })
